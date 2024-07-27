@@ -40,13 +40,16 @@
 Here are some screenshots of the application:
 
 - **Login Page**:
-  ![Login Page](path/to/login-page-screenshot.png)
+  ![Login Page](https://github.com/zahidrahimoon/Hospital-Management-System/blob/master/Screenshots/doctor.PNG)
+
+- **Welcome Page**:
+  ![Welcome Page](https://github.com/zahidrahimoon/Hospital-Management-System/blob/master/Screenshots/welcome.PNG)
 
 - **Patient Management**:
-  ![Patient Management](path/to/patient-management-screenshot.png)
+  ![Patient Management](https://github.com/zahidrahimoon/Hospital-Management-System/blob/master/Screenshots/patient.PNG)
 
 - **Doctor Management**:
-  ![Doctor Management](path/to/doctor-management-screenshot.png)
+  ![Doctor Management](https://github.com/zahidrahimoon/Hospital-Management-System/blob/master/Screenshots/doctor.PNG)
 
 ## Usage
 

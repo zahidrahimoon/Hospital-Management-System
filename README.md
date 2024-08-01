@@ -40,7 +40,7 @@
 Here are some screenshots of the application:
 
 - **Login Page**:
-  ![Login Page](https://github.com/zahidrahimoon/Hospital-Management-System/blob/master/Screenshots/doctor.PNG)
+  ![Login Page](https://github.com/zahidrahimoon/Hospital-Management-System/blob/master/Screenshots/login.PNG)
 
 - **Welcome Page**:
   ![Welcome Page](https://github.com/zahidrahimoon/Hospital-Management-System/blob/master/Screenshots/welcome.PNG)

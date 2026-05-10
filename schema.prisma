@@ -1,0 +1,131 @@
+// ============================================================
+// Legacy Hospital Schema — Prisma ORM Representation
+// Purpose: Software Re-Engineering project — models a real-world
+// legacy hospital database with intentional design smells preserved
+// and annotated for analysis.
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// TABLE: pat_master
+// Stores core patient demographic and registration data.
+// ============================================================
+model pat_master {
+  pid          Int     @id @default(autoincrement())
+  p_name       String
+
+  dob          String  // SMELL: Date stored as text (VarChar) — should be a Date type; prevents date arithmetic and sorting
+  sex          String  @db.Char(1)
+
+  ph1          String? // SMELL: Repeating group — ph1, ph2, ph3 violate 1NF; should be a separate phone table
+  ph2          String? // SMELL: Repeating group — see ph1
+  ph3          String? // SMELL: Repeating group — see ph1
+
+  addr1        String?
+  addr2        String?
+  city         String?
+
+  reg_doc      String? // SMELL: Doctor's name stored as plain text — no referential integrity; should be a FK to doctors table
+  reg_doc_id   String? // SMELL: Inconsistent type — doctor ID stored as String instead of Int; mismatches doctors.DoctorID (Int)
+
+  total_visits Int     @default(0)
+
+  last_bill    Float?  // SMELL: Float used for monetary value — floating-point imprecision; should use Decimal for currency
+  notes        String? @db.Text // SMELL: Mixed/unstructured data crammed into a single text column — violates SRP and queryability
+}
+
+// ============================================================
+// TABLE: appointments
+// Tracks scheduled appointments between patients and doctors.
+// ============================================================
+model appointments {
+  appt_id    Int    @id
+
+  patient_id Int
+
+  patient_nm String? // SMELL: Duplicate data — patient name copied from pat_master; violates 3NF and risks data inconsistency
+  patient_ph String? // SMELL: Duplicate data — patient phone copied from pat_master; same issue as patient_nm
+
+  doc_id     Int
+  doc_name   String? // SMELL: Duplicate data — doctor name copied from doctors table; should be derived via FK join
+
+  appt_date  String  // SMELL: Date + time stored as plain text string — loses sortability, timezone handling, and type safety
+
+  status     String  @db.Char(1) // SMELL: Magic value / undocumented enum — single char ('P','C','N') with no constraint or documentation
+
+  fee        Float?  // SMELL: Float for monetary value — should be Decimal to avoid floating-point rounding errors
+  discount   Float?
+  net_fee    Float?  // SMELL: Derived/computed column — net_fee = fee - discount; storing it risks inconsistency; should be computed at query time
+
+  room       String? // SMELL: Overloaded column — contains both room number and block (e.g., "Room 3 Block B"); should be split into separate fields
+}
+
+// ============================================================
+// TABLE: doctors
+// Stores doctor profiles including department and salary.
+// ============================================================
+model doctors {
+  DoctorID   Int     @id @default(autoincrement())
+  FullName   String
+  Speciality String
+  ContactNo  String?
+
+  JoinDt     String? // SMELL: Date stored as text — join date should be a Date type for proper tenure calculations and reporting
+
+  Salary     Float?  // SMELL: Float used for monetary value — salary should be Decimal to avoid precision loss
+
+  dept_id    Int?    // SMELL: No foreign key constraint — dept_id references departments but has no FK; orphaned records are possible
+
+  isActive   String? @db.Char(1) // SMELL: Boolean misrepresented as Char(1) — should be a Boolean field; 'Y'/'N' is ambiguous and not type-safe
+}
+
+// ============================================================
+// TABLE: billing
+// Records billing transactions for patients.
+// ============================================================
+model billing {
+  // NOTE: Surrogate key added for Prisma compatibility only —
+  // in the original legacy schema, billing had NO primary key (see smell on bill_no below)
+  id         Int     @id @default(autoincrement())
+
+  bill_no    String  // SMELL: Missing primary key constraint — bill_no was intended as the PK in the legacy system but had no PK constraint, allowing duplicate billing records
+
+  pid        Int
+  pname      String? // SMELL: Duplicate data — patient name stored again; violates 3NF; should be retrieved via pid FK join
+
+  services   String? @db.Text // SMELL: Comma-separated values in a single text column — violates 1NF; should be a separate billing_services table
+
+  svc_cost   Float?
+  tax_pct    Float?
+  tax_amt    Float?  // SMELL: Derived column — tax_amt = svc_cost * tax_pct / 100; storing it risks inconsistency
+
+  grand_total Float? // SMELL: Derived column — grand_total = svc_cost + tax_amt; should be computed at query time, not stored
+
+  paid       Float?
+  balance    Float?  // SMELL: Derived column — balance = grand_total - paid; storing it risks stale/incorrect values
+
+  created    String? // SMELL: Date stored as text — creation timestamp should be DateTime for auditability and sorting
+
+  created_by String? // SMELL: No foreign key — stores a username or name string instead of a reference to a users/staff table
+}
+
+// ============================================================
+// TABLE: departments
+// Stores hospital department metadata.
+// ============================================================
+model departments {
+  dept_id Int    @id @default(autoincrement())
+  dept_nm String
+
+  hod     String? // SMELL: Head-of-department stored as plain name text — should be a FK to doctors table for referential integrity
+
+  budget  Float?  // SMELL: Float used for monetary value — budget should be Decimal to prevent floating-point imprecision in financial data
+}
